@@ -12,7 +12,6 @@ except ImportError:
     sys.exit(1)
 
 import unwrap.unwrap2D as unwrap2D
-import unwrap.unwrap3D as unwrap3D
 
 
 DOCUMENTATION = open('README.rst').read()
@@ -45,7 +44,6 @@ setup(
     ext_package="unwrap",
     ext_modules=[
         unwrap2D._ffi.verifier.get_extension(),
-        unwrap3D._ffi.verifier.get_extension()
         ],
     zip_safe=False, # cffi requirement for setuptools
     )

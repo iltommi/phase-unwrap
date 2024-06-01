@@ -310,7 +310,7 @@ void extend_mask(unsigned char *input_mask, unsigned char *extended_mask,
     }
 }
 
-void calculate_reliability(float *wrappedImage, PIXELM *pixel,
+void calculate_reliability(float *wrappedImage, float *qualityImage, PIXELM *pixel,
 			   int image_width, int image_height,
 			   params_t *params)
 {
@@ -318,6 +318,7 @@ void calculate_reliability(float *wrappedImage, PIXELM *pixel,
   int image_width_minus_one = image_width - 1;
   PIXELM *pixel_pointer = pixel + image_width_plus_one;
   float *WIP = wrappedImage + image_width_plus_one; //WIP is the wrapped image pointer
+  float *QIP = qualityImage + image_width_plus_one; //WIP is the quality image pointer
   float H, V, D1, D2;
   int i, j;
 
@@ -331,13 +332,15 @@ void calculate_reliability(float *wrappedImage, PIXELM *pixel,
 	      V = wrap(*(WIP - image_width) - *WIP) - wrap(*WIP - *(WIP + image_width));
 	      D1 = wrap(*(WIP - image_width_plus_one) - *WIP) - wrap(*WIP - *(WIP + image_width_plus_one));
 	      D2 = wrap(*(WIP - image_width_minus_one) - *WIP) - wrap(*WIP - *(WIP + image_width_minus_one));
-	      pixel_pointer->reliability = H*H + V*V + D1*D1 + D2*D2;
+	      pixel_pointer->reliability = (H*H + V*V + D1*D1 + D2*D2) / (*QIP);
 	    }
 	  pixel_pointer++;
 	  WIP++;
+	  QIP++;
 	}
       pixel_pointer += 2;
       WIP += 2;
+	  QIP += 2;
     }
 
   if (params->x_connectivity == 1)
@@ -345,6 +348,7 @@ void calculate_reliability(float *wrappedImage, PIXELM *pixel,
       //calculating the reliability for the left border of the image
       PIXELM *pixel_pointer = pixel + image_width;
       float *WIP = wrappedImage + image_width;
+      float *QIP = qualityImage + image_width;
 
       for (i = 1; i < image_height - 1; ++i)
 	{
@@ -354,15 +358,17 @@ void calculate_reliability(float *wrappedImage, PIXELM *pixel,
 	      V = wrap(*(WIP - image_width) - *WIP) - wrap(*WIP - *(WIP + image_width));
 	      D1 = wrap(*(WIP - 1) - *WIP) - wrap(*WIP - *(WIP + image_width_plus_one));
 	      D2 = wrap(*(WIP - image_width_minus_one) - *WIP) - wrap(*WIP - *(WIP + 2* image_width - 1));
-	      pixel_pointer->reliability = H*H + V*V + D1*D1 + D2*D2;
+	      pixel_pointer->reliability = (H*H + V*V + D1*D1 + D2*D2) / (*QIP);
 	    }
 	  pixel_pointer += image_width;
 	  WIP += image_width;
+	  QIP += image_width;
 	}
 
       //calculating the reliability for the right border of the image
       pixel_pointer = pixel + 2 * image_width - 1;
       WIP = wrappedImage + 2 * image_width - 1;
+      QIP = qualityImage + 2 * image_width - 1;
 
       for (i = 1; i < image_height - 1; ++i)
 	{
@@ -372,10 +378,11 @@ void calculate_reliability(float *wrappedImage, PIXELM *pixel,
 	      V = wrap(*(WIP - image_width) - *WIP) - wrap(*WIP - *(WIP + image_width));
 	      D1 = wrap(*(WIP - image_width_plus_one) - *WIP) - wrap(*WIP - *(WIP + 1));
 	      D2 = wrap(*(WIP - 2 * image_width - 1) - *WIP) - wrap(*WIP - *(WIP + image_width_minus_one));
-	      pixel_pointer->reliability = H*H + V*V + D1*D1 + D2*D2;
+	      pixel_pointer->reliability = (H*H + V*V + D1*D1 + D2*D2) / (*QIP);
 	    }
 	  pixel_pointer += image_width;
 	  WIP += image_width;
+	  QIP += image_width;
 	}
     }
 
@@ -384,6 +391,7 @@ void calculate_reliability(float *wrappedImage, PIXELM *pixel,
       //calculating the reliability for the top border of the image
       PIXELM *pixel_pointer = pixel + 1;
       float *WIP = wrappedImage + 1;
+      float *QIP = wrappedImage + 1;
 
       for (i = 1; i < image_width - 1; ++i)
 	{
@@ -393,15 +401,17 @@ void calculate_reliability(float *wrappedImage, PIXELM *pixel,
 	      V =  wrap(*(WIP + image_width*(image_height - 1)) - *WIP) - wrap(*WIP - *(WIP + image_width));
 	      D1 = wrap(*(WIP + image_width*(image_height - 1) - 1) - *WIP) - wrap(*WIP - *(WIP + image_width_plus_one));
 	      D2 = wrap(*(WIP + image_width*(image_height - 1) + 1) - *WIP) - wrap(*WIP - *(WIP + image_width_minus_one));
-	      pixel_pointer->reliability = H*H + V*V + D1*D1 + D2*D2;
+	      pixel_pointer->reliability = (H*H + V*V + D1*D1 + D2*D2) / (*QIP);
 	    }
 	  pixel_pointer++;
 	  WIP++;
+	  QIP++;
 	}
 
       //calculating the reliability for the bottom border of the image
       pixel_pointer = pixel + (image_height - 1) * image_width + 1;
       WIP = wrappedImage + (image_height - 1) * image_width + 1;
+      QIP = wrappedImage + (image_height - 1) * image_width + 1;
 
       for (i = 1; i < image_width - 1; ++i)
 	{
@@ -411,10 +421,11 @@ void calculate_reliability(float *wrappedImage, PIXELM *pixel,
 	      V =  wrap(*(WIP - image_width) - *WIP) - wrap(*WIP - *(WIP -(image_height - 1) * (image_width)));
 	      D1 = wrap(*(WIP - image_width_plus_one) - *WIP) - wrap(*WIP - *(WIP - (image_height - 1) * (image_width) + 1));
 	      D2 = wrap(*(WIP - image_width_minus_one) - *WIP) - wrap(*WIP - *(WIP - (image_height - 1) * (image_width) - 1));
-	      pixel_pointer->reliability = H*H + V*V + D1*D1 + D2*D2;
+	      pixel_pointer->reliability = (H*H + V*V + D1*D1 + D2*D2) / (*QIP);
 	    }
 	  pixel_pointer++;
 	  WIP++;
+	  QIP++;
 	}
     }
 }
@@ -689,7 +700,7 @@ void  returnImage(PIXELM *pixel, float *unwrapped_image, int image_width, int im
 
 //the main function of the unwrapper
 void
-unwrap2D(float* wrapped_image, float* UnwrappedImage, unsigned char* input_mask,
+unwrap2D(float* wrapped_image, float* quality_image, float* UnwrappedImage, unsigned char* input_mask,
 	 int image_width, int image_height,
 	 int wrap_around_x, int wrap_around_y)
 {
@@ -706,7 +717,7 @@ unwrap2D(float* wrapped_image, float* UnwrappedImage, unsigned char* input_mask,
 
   extend_mask(input_mask, extended_mask, image_width, image_height, &params);
   initialisePIXELs(wrapped_image, input_mask, extended_mask, pixel, image_width, image_height);
-  calculate_reliability(wrapped_image, pixel, image_width, image_height, &params);
+  calculate_reliability(wrapped_image, quality_image, pixel, image_width, image_height, &params);
   horizontalEDGEs(pixel, edge, image_width, image_height, &params);
   verticalEDGEs(pixel, edge, image_width, image_height, &params);
 
