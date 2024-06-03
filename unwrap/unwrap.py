@@ -4,10 +4,7 @@ import numpy as np
 from unwrap.unwrap2D import unwrap2D
 
 
-def unwrap(wrapped_array,
-           wrap_around_axis_0 = False,
-           wrap_around_axis_1 = False,
-           quality_array=None):
+def unwrap(wrapped_array,quality_array=None):
 
     wrapped_array = np.require(wrapped_array, np.float32, ['C'])
     if quality_array is None:
@@ -25,8 +22,7 @@ def unwrap(wrapped_array,
     unwrapped_array = np.empty_like(wrapped_array_masked.data)
     unwrap2D(wrapped_array_masked.data, quality_array_masked.data,
              np.ma.getmaskarray(wrapped_array_masked).astype(np.uint8),
-             unwrapped_array,
-             bool(wrap_around_axis_0), bool(wrap_around_axis_1))
+             unwrapped_array)
 
     if np.ma.isMaskedArray(wrapped_array):
         return np.ma.array(unwrapped_array, mask = wrapped_array_masked.mask)
